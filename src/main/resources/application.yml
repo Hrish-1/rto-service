@@ -1,0 +1,21 @@
+spring.application.name: rto
+
+spring.datasource:
+  url: jdbc:postgresql://localhost:5433/rto
+  username: postgres
+  password: postgres
+
+spring.flyway:
+  enabled: false
+  clean-disabled: true
+  user:
+  password:
+
+spring:
+  web:
+    resources:
+      static-locations: file:${storage.root}
+  mvc:
+    static-path-pattern: /uploads/**
+
+storage.root: # set in env

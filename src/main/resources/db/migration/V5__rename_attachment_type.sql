@@ -1,0 +1,1 @@
+ALTER TABLE attachments RENAME COLUMN attachment_type TO type;

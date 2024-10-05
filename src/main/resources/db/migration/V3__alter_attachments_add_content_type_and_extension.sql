@@ -1,0 +1,2 @@
+ALTER TABLE attachments ADD COLUMN content_type VARCHAR(30) NOT NULL;
+ALTER TABLE attachments ADD COLUMN ext VARCHAR(5) NOT NULL;

@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+
+  db:
+    image: postgres:13.6-alpine
+    healthcheck:
+      test: pg_isready
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rto
+    ports:
+      - "5433:5432"
