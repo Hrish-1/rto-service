@@ -8,8 +8,8 @@ import org.springframework.context.annotation.ComponentScan
 @SpringBootApplication
 @ComponentScan("com.gmotors")
 @ConfigurationPropertiesScan("com.gmotors")
-class RtoApplication
+class Application
 
 fun main(args: Array<String>) {
-    runApplication<RtoApplication>(*args)
+    runApplication<Application>(*args)
 }
