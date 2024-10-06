@@ -39,34 +39,29 @@ class AttachmentController(
         @RequestPart chassis: MultipartFile?,
         @RequestPart request: AttachmentPartialCreateRequestDto
     ) {
-        create(request, AADHAAR, aadhaar)
-        create(request, PAN, pan)
-        create(request, INSURANCE, insurance)
-        create(request, CHASSIS, chassis)
-
-        if (!request.createForms) return
-
-        create(request, FORM29)
-        create(request, FORM30_1)
-        create(request, FORM30_2)
+        val txFiles = mapOf(AADHAAR to aadhaar, PAN to pan, INSURANCE to insurance, CHASSIS to chassis)
+        txFiles.forEach { createAttachment(request, it.key, it.value) }
+        if (request.createForms) {
+            val txForms = listOf(FORM29, FORM30_1, FORM30_2)
+            txForms.forEach { createAttachment(request, it) }
+        }
     }
 
     @GetMapping("/bytransaction/{txId}")
+    @ResponseStatus(HttpStatus.OK)
     fun getByTxId(@PathVariable("txId") txId: UUID): Map<String, String> {
         return service.listByTransactionId(txId)
     }
 
-    private fun create(
+    private fun createAttachment(
         request: AttachmentPartialCreateRequestDto,
         type: AttachmentType,
-        file: MultipartFile?
+        file: MultipartFile? = null
     ) {
         val req = mapper.toRequestModel(request, type)
-        file?.let { service.create(req, it) }
-    }
-
-    private fun create(request: AttachmentPartialCreateRequestDto, type: AttachmentType) {
-        val req = mapper.toRequestModel(request, type)
-        service.create(req)
+        when (file) {
+            null -> service.create(req)
+            else -> service.create(req, file)
+        }
     }
 }
