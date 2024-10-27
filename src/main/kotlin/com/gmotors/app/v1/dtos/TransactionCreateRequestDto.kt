@@ -23,5 +23,5 @@ data class TransactionCreateRequestDto(
     val cancelDate: LocalDate?,
     val customerId: UUID,
     val bankId: UUID?,
-    val serviceIds: List<UUID> = listOf()
+    val serviceIds: Set<UUID> = setOf()
 )

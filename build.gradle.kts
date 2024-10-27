@@ -6,7 +6,7 @@ plugins {
     id("org.springframework.boot") version "3.3.4"
     id("io.spring.dependency-management") version "1.1.6"
     id("org.flywaydb.flyway") version "9.3.1"
-    id("nu.studer.jooq") version "6.0.1"
+    id("org.jooq.jooq-codegen-gradle") version "3.19.11"
 }
 
 group = "com.gmotors"
@@ -47,8 +47,9 @@ dependencies {
 
     // Database
     runtimeOnly("org.postgresql:postgresql")
-    jooqGenerator("org.postgresql:postgresql")
+    jooqCodegen("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
     // Object mapping, validation, and other helpers
     val mapstructVersion = "1.5.2.Final"
@@ -73,7 +74,10 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("com.github.librepdf:openpdf:2.0.3")
-
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("io.rest-assured:rest-assured")
+    implementation("io.github.serpro69:kotlin-faker:1.16.0")
 }
 
 kotlin {
@@ -88,7 +92,7 @@ tasks.withType<Test> {
 
 // ------------
 // DB, flyway, jooq code generation config.
-// See https://www.jooq.org/doc/3.15/manual-single-page/#code-generation
+// See https://www.jooq.org/doc/3.19/manual-single-page/#code-generation
 flyway {
     url = System.getenv("FLYWAY_URL") ?: "jdbc:postgresql://localhost:5433/rto"
     user = System.getenv("FLYWAY_USER") ?: "postgres"
@@ -103,38 +107,30 @@ flyway {
 }
 
 jooq {
-    version.set(dependencyManagement.importedProperties["jooq.version"]) // match spring boot version
-
-    configurations {
-        create("main") {
-            jooqConfiguration.apply {
-                generateSchemaSourceOnCompilation.set(false)
-                logging = org.jooq.meta.jaxb.Logging.WARN
-                jdbc.apply {
-                    driver = "org.postgresql.Driver"
-                    url = flyway.url
-                    user = flyway.user
-                    password = flyway.password
-                }
-                generator.apply {
-                    name = "org.jooq.codegen.KotlinGenerator"
-                    database.apply {
-                        name = "org.jooq.meta.postgres.PostgresDatabase"
-                        inputSchema = "public"
-                        includes = ".*"
-                    }
-                    generate.apply {
-                        isDeprecated = false
-                        isRecords = true
-                        isDaos = false
-                        isPojos = false
-                        isFluentSetters = true
-                    }
-                    target.apply {
-                        packageName = "com.gmotors.infra.jooq"
-                    }
-                    strategy.name = "org.jooq.codegen.DefaultGeneratorStrategy"
-                }
+    configuration {
+        logging = org.jooq.meta.jaxb.Logging.WARN
+        jdbc {
+            driver = "org.postgresql.Driver"
+            url = flyway.url
+            user = flyway.user
+            password = flyway.password
+        }
+        generator {
+            name = "org.jooq.codegen.KotlinGenerator"
+            database {
+                name = "org.jooq.meta.postgres.PostgresDatabase"
+                includes = ".*"
+                inputSchema = "public"
+            }
+            generate {
+                isDeprecated = false
+                isRecords = true
+                isDaos = false
+                isPojos = false
+                isFluentSetters = true
+            }
+            target {
+                packageName = "com.gmotors.infra.jooq"
             }
         }
     }
@@ -144,7 +140,7 @@ buildscript {
     // Configure jooq plugin to use correct jooq version that matches spring boot managed jooq version.
     // See https://github.com/etiennestuder/gradle-jooq-plugin#configuring-the-jooq-generation-tool
     // and https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html
-    val jooqVersion = "3.15.11"
+    val jooqVersion = "3.19.11"
     configurations["classpath"].resolutionStrategy.eachDependency {
         if (requested.group == "org.jooq") {
             useVersion(jooqVersion)
@@ -152,24 +148,14 @@ buildscript {
     }
 }
 
-tasks.withType<nu.studer.gradle.jooq.JooqGenerate> {
-    inputs.files(fileTree("src/main/resources/db/migration"))
-        .withPropertyName("migrations")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-
-    // Make jooq use incremental builds and caching.
-    allInputsDeclared.set(true)
-    outputs.cacheIf { true }
-}
-
 tasks.compileKotlin {
-    mustRunAfter(tasks.named("generateJooq"))
+    mustRunAfter(tasks.jooqCodegen)
 }
 
 // ------------
 // Other helper tasks
 tasks.register("initDb") {
     group = "db"
-    description = "Runs flywayMigrate and generateJooq so regular build will have db dependencies"
-    dependsOn(tasks.flywayMigrate, tasks.named("generateJooq"))
+    description = "Runs flywayMigrate and jooqCodegen so regular build will have db dependencies"
+    dependsOn(tasks.flywayMigrate, tasks.jooqCodegen)
 }

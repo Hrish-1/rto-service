@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/rto
+    username: postgres
+    password: postgres
+
+  # The user and password must match the credentials configured in the BaseAppIntegrationTest class
+  # for the test DB container, if you're using these flyway settings and not overriding them.
+  flyway:
+    enabled: true # run flyway migrations on startup
+    clean-disabled: true
+    user: postgres
+    password: postgres
+
+rto:
+  storage:
+    root: attachments
+    server: http://localhost:8080/attachments/

@@ -21,5 +21,5 @@ data class TransactionUpdateRequest(
     val cancelDate: LocalDate?,
     val customerId: UUID,
     val bankId: UUID?,
-    val serviceIds: List<UUID>,
+    val serviceIds: Set<UUID>,
 )

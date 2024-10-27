@@ -1,4 +1,4 @@
-package com.gmotors.infra.filesystem
+package com.gmotors.core
 
 import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
@@ -9,5 +9,5 @@ interface StorageService {
 
     fun store(file: MultipartFile): UUID
 
-    fun mapToPdfAndStore(html: String): UUID
+    fun mapToPdfAndStore(html: HtmlContent): UUID
 }

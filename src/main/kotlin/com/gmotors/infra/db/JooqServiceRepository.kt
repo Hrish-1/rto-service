@@ -10,10 +10,12 @@ import java.util.*
 @Repository
 class JooqServiceRepository(private val dsl: DSLContext) : ServiceRepository {
 
-    override fun totalAmount(ids: List<UUID>): Double =
-        dsl.select(sum(SERVICES.AMOUNT))
+    override fun totalAmount(ids: Set<UUID>): Double {
+        return dsl.select(sum(SERVICES.AMOUNT))
             .from(SERVICES)
             .where(SERVICES.ID.`in`(ids))
-            .sumOf { it.value1() }
-            .toDouble()
+            .fetchOne()
+            ?.value1()
+            ?.toDouble() ?: 0.0
+    }
 }

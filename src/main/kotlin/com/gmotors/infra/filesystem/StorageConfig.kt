@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@ConfigurationProperties("storage")
+@ConfigurationProperties(prefix = "rto.storage")
 data class StorageConfig(
     val root: String,
 ) {

@@ -3,7 +3,6 @@ package com.gmotors.app.v1
 import com.gmotors.app.v1.dtos.AttachmentPartialCreateRequestDto
 import com.gmotors.app.v1.mapping.AttachmentMapper
 import com.gmotors.core.attachments.AttachmentService
-import com.gmotors.core.attachments.AttachmentType
 import com.gmotors.core.attachments.AttachmentType.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.net.InetAddress
 import java.util.UUID
 
 @RestController
@@ -31,7 +31,7 @@ class AttachmentController(
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.CREATED)
     fun create(
         @RequestPart aadhaar: MultipartFile?,
         @RequestPart pan: MultipartFile?,
@@ -40,10 +40,17 @@ class AttachmentController(
         @RequestPart request: AttachmentPartialCreateRequestDto
     ) {
         val txFiles = mapOf(AADHAAR to aadhaar, PAN to pan, INSURANCE to insurance, CHASSIS to chassis)
-        txFiles.forEach { createAttachment(request, it.key, it.value) }
+        txFiles.forEach { x ->
+            x.value?.let { file ->
+                val req = mapper.toRequestModel(request, x.key)
+                service.create(req, file)
+            }
+        }
         if (request.createForms) {
             val txForms = listOf(FORM29, FORM30_1, FORM30_2)
-            txForms.forEach { createAttachment(request, it) }
+            txForms.forEach {
+                service.create(mapper.toRequestModel(request, it))
+            }
         }
     }
 
@@ -51,17 +58,5 @@ class AttachmentController(
     @ResponseStatus(HttpStatus.OK)
     fun getByTxId(@PathVariable("txId") txId: UUID): Map<String, String> {
         return service.listByTransactionId(txId)
-    }
-
-    private fun createAttachment(
-        request: AttachmentPartialCreateRequestDto,
-        type: AttachmentType,
-        file: MultipartFile? = null
-    ) {
-        val req = mapper.toRequestModel(request, type)
-        when (file) {
-            null -> service.create(req)
-            else -> service.create(req, file)
-        }
     }
 }

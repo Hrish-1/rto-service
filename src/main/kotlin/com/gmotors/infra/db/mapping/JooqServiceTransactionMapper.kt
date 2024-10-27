@@ -14,7 +14,7 @@ interface JooqServiceTransactionMapper {
 
     fun toModels(records: List<ServicesTransactionsRecord>): List<ServiceTransaction>
 
-    fun toRecordsFromIds(serviceIds: List<UUID>, transactionId: UUID): List<ServicesTransactionsRecord> {
+    fun toRecordsFromIds(serviceIds: Set<UUID>, transactionId: UUID): List<ServicesTransactionsRecord> {
         val requests = serviceIds.map { ServiceTransactionCreateRequest(UUID.randomUUID(), it, transactionId) }
         return toRecordsFromCreateRequests(requests)
     }

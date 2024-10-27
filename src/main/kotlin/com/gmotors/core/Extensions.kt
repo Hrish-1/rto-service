@@ -1,4 +1,4 @@
-package com.gmotors.infra.filesystem
+package com.gmotors.core
 
 import org.springframework.web.multipart.MultipartFile
 

@@ -26,8 +26,8 @@ class JooqTransactionRepository(
         dsl.transaction { ctx ->
             val txDsl = ctx.dsl()
             val amount = svcRepository.totalAmount(request.serviceIds)
-            val txRecords = mapper.toRecord(request, amount)
-            txDsl.executeInsert(txRecords)
+            val txRecord = mapper.toRecord(request, amount)
+            txDsl.executeInsert(txRecord)
             val svcTxRecords = svcTxMapper.toRecordsFromIds(request.serviceIds, request.id)
             txDsl.batchInsert(svcTxRecords).execute()
         }
@@ -36,10 +36,10 @@ class JooqTransactionRepository(
     override fun update(request: TransactionUpdateRequest) {
         val existingAmount = getAmount(request.id)
         val calculatedAmount = svcRepository.totalAmount(request.serviceIds)
-        val updateAmount = existingAmount != calculatedAmount
+        val shouldUpdateAmount = existingAmount != calculatedAmount
         dsl.transaction { ctx ->
             val txDsl = ctx.dsl()
-            if (!updateAmount) {
+            if (!shouldUpdateAmount) {
                 txDsl.executeUpdate(mapper.toRecord(request, existingAmount))
                 return@transaction
             }

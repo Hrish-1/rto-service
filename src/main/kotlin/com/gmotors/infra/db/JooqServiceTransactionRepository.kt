@@ -11,7 +11,8 @@ import java.util.*
 @Repository
 class JooqServiceTransactionRepository(
     private val dsl: DSLContext,
-    private val mapper: JooqServiceTransactionMapper) : ServiceTransactionRepository {
+    private val mapper: JooqServiceTransactionMapper
+) : ServiceTransactionRepository {
 
     override fun findByTransactionId(transactionId: UUID): List<ServiceTransaction> {
         return mapper.toModels(dsl.selectFrom(SERVICES_TRANSACTIONS)

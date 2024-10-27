@@ -82,12 +82,15 @@ CREATE TABLE transactions (
 
 -- Attachment
 CREATE TYPE entity_type AS ENUM ('employee', 'transaction');
+CREATE TYPE attachment_type AS ENUM ('aadhaar', 'pan', 'insurance', 'chassis', 'profile', 'form29', 'form30_1', 'form30_2');
 
 CREATE TABLE attachments (
-    id           UUID PRIMARY KEY,
-    entity_type  entity_type NOT NULL,
-    path         VARCHAR(255) NOT NULL,
-    entity_id    UUID NOT NULL
+    id            UUID PRIMARY KEY,
+    entity_type   entity_type NOT NULL,
+    entity_id     UUID NOT NULL,
+    content_type  VARCHAR(30) NOT NULL,
+    ext           VARCHAR(5) NOT NULL,
+    type          attachment_type NOT NULL
 );
 
 -- Service

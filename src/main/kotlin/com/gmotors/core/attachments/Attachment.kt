@@ -6,7 +6,8 @@ data class Attachment(
     val id: UUID,
     val type: AttachmentType,
     val entityType: EntityType,
-    val path: String,
+    val contentType: String,
+    val ext: String,
     val entityId: UUID
 )
 
@@ -23,5 +24,9 @@ enum class AttachmentType {
     FORM30_1,
     FORM30_2,
     FORM29,
-    PROFILE
+    PROFILE;
+
+    fun templateName(): String {
+        return this.name.lowercase()
+    }
 }

@@ -1,37 +1,37 @@
 package com.gmotors.infra.filesystem
 
+import com.gmotors.core.FileSystem
+import com.gmotors.core.HtmlContent
+import com.gmotors.core.StorageService
+import com.gmotors.core.ext
 import com.lowagie.text.Document
 import com.lowagie.text.html.simpleparser.HTMLWorker
 import com.lowagie.text.pdf.PdfWriter
-import org.apache.commons.logging.LogFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.IOException
-import java.io.OutputStream
 import java.io.StringReader
-import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.UUID
-import kotlin.io.path.outputStream
-import kotlin.io.path.reader
 
 @Service
-class FileStorageService(val config: StorageConfig) : StorageService {
+class FileStorageService(val config: StorageConfig, val fileSystem: FileSystem) : StorageService {
     companion object {
         val log: Logger = LoggerFactory.getLogger(this::class.java)
     }
 
-    override fun init() {
-        if (!Files.exists(config.getRootPath())) {
-            Files.createDirectories(config.getRootPath())
+    final override fun init() {
+        if (!fileSystem.exists(config.getRootPath())) {
+            fileSystem.createDirectories(config.getRootPath())
         }
     }
 
+    init { init() }
+
     @Throws(IOException::class)
     override fun store(file: MultipartFile): UUID {
-        init()
         require(!file.isEmpty) { "File cannot be empty" }
         val fileId = UUID.randomUUID()
         val destinationFile = config
@@ -43,7 +43,7 @@ class FileStorageService(val config: StorageConfig) : StorageService {
             "Destination file parent path should start with root path"
         }
         file.inputStream.use { inputStream ->
-            Files.copy(
+            fileSystem.copy(
                 inputStream,
                 destinationFile,
                 StandardCopyOption.REPLACE_EXISTING
@@ -53,8 +53,7 @@ class FileStorageService(val config: StorageConfig) : StorageService {
     }
 
     @Throws(IOException::class)
-    override fun mapToPdfAndStore(html: String): UUID {
-        init()
+    override fun mapToPdfAndStore(html: HtmlContent): UUID {
         val document = Document()
         val id = UUID.randomUUID()
         val destinationFile = config
@@ -62,11 +61,11 @@ class FileStorageService(val config: StorageConfig) : StorageService {
             .resolve("$id.pdf")
             .normalize()
             .toAbsolutePath()
-        val file = Files.createFile(destinationFile)
-        PdfWriter.getInstance(document, file.outputStream())
+        val file = fileSystem.createFile(destinationFile)
+        PdfWriter.getInstance(document, fileSystem.getOutputStream(file))
         document.open()
         val htmlWorker = HTMLWorker(document)
-        htmlWorker.parse(StringReader(html))
+        htmlWorker.parse(StringReader(html.value()))
         document.close()
         return id
     }
